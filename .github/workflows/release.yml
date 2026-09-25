@@ -43,7 +43,7 @@ jobs:
 
       # Подтверждение происхождения: проверяется командой
       # gh attestation verify <файл> --repo <владелец>/<репозиторий>
-      - uses: actions/attest-build-provenance@v1
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'dist/izba-*'
 

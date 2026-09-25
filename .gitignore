@@ -1,0 +1,12 @@
+# Собранные бинарники
+/izba
+/izba.exe
+/dist/
+
+# Рабочие каталоги тестового сервера
+/server/
+/java/
+/backups/
+/.izba/
+izba.toml
+izba.lock

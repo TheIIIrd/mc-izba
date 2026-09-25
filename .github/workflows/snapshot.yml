@@ -1,0 +1,43 @@
+name: Snapshot
+
+# Сборки с unstable для проверки на реальных машинах.
+#
+# Это не релиз: артефакты живут 14 дней, доступны только по ссылке на прогон
+# и не появляются на странице Releases. Нужны затем, что основная часть
+# проверок izba возможна только вживую — со скачиванием ядра, Java и
+# запуском сервера, — а собирать бинарник под каждую платформу вручную
+# перед каждой проверкой утомительно.
+
+on:
+  push:
+    branches: [unstable]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Сборка снапшота
+        env:
+          # Версия снапшота включает короткий хеш коммита: по выводу
+          # izba version сразу видно, что именно проверялось.
+          VERSION: unstable-${{ github.run_number }}-${{ github.sha }}
+          CONTACT_URL: https://github.com/${{ github.repository }}
+        run: |
+          VERSION="unstable-${GITHUB_RUN_NUMBER}-$(git rev-parse --short HEAD)"
+          make dist VERSION="$VERSION" CONTACT_URL="$CONTACT_URL"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: izba-unstable
+          path: dist/
+          retention-days: 14

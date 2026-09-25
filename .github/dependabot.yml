@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Зависимости Go.
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # Сами GitHub Actions: устаревшая версия экшена — такой же риск цепочки
+  # поставки, как и устаревшая библиотека.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

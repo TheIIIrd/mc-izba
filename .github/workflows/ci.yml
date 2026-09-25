@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main, unstable]
+  pull_request:
+    branches: [main, unstable]
+
+# Явно ограничиваем токен чтением: по умолчанию в некоторых настройках
+# репозитория он получает права на запись, которые сборке не нужны.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Тесты (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows и macOS в матрице обязательны: платформенный код разнесён
+        # по файлам с build-тегами, и на Linux он просто не компилируется.
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          # Версия берётся из go.mod: так CI, релизы и локальная сборка
+          # не могут разъехаться.
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Тесты с детектором гонок
+        run: go test -race -count=1 ./...
+
+  lint:
+    name: Форматирование и статический анализ
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "Не отформатированы:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - uses: dominikh/staticcheck-action@v1
+        with:
+          version: latest
+          install-go: false
+
+  cross-build:
+    name: Кросс-компиляция
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Сборка под все целевые платформы
+        run: make dist
